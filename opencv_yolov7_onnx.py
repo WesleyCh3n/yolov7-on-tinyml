@@ -4,7 +4,7 @@ import onnxruntime as ort
 import time
 
 providers = ["CPUExecutionProvider"]
-session = ort.InferenceSession("./best-320-quant.onnx", providers=providers)
+session = ort.InferenceSession("./best-320.onnx", providers=providers)
 
 img = cv2.imread("./test.jpg").astype(np.float32)  # type: ignore
 
@@ -23,9 +23,16 @@ print(inname)
 inp = {inname[0]: inputImg}
 
 
-s = time.time()
-outputs = session.run(outname, inp)[0]
-e = time.time()
-print(f"{e-s}")
-print(outputs.shape)
+sum_time = 0
+outputs = []
+for i in range(60):
+    s = time.time()
+    outputs = session.run(outname, inp)[0]
+    e = time.time()
+    sum_time += e-s
+    print(f"{e-s}")
+
+print(f"average time: {sum_time/60}")
+print(f"fps: {1/(sum_time/60)}")
+
 print(outputs)
