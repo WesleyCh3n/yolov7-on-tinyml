@@ -1,13 +1,22 @@
 #include "onnxruntime_cxx_api.h"
 #include "opencv2/opencv.hpp"
 #include <iostream>
+#include <numeric>
 
-template <typename T> void printv(std::vector<T> v) {
-  std::cout << "[ ";
-  for (T &ele : v) {
-    std::cout << ele << " ";
+template <typename T> T vectorProduct(std::vector<T> v) {
+  return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+  os << "[";
+  for (int i = 0; i < v.size(); i++) {
+    os << v[i];
+    if (i != v.size() - 1)
+      os << " ";
   }
-  std::cout << "]\n";
+  os << "]";
+  return os;
 }
 
 int main(int argc, char *argv[]) {
@@ -40,8 +49,8 @@ int main(int argc, char *argv[]) {
 
   std::cout << "inputName: " << inputName << '\n';
   std::cout << "outputName: " << outputName << '\n';
-  printv(inputShape);
-  printv(outputShape);
+  std::cout << inputShape << '\n';
+  std::cout << outputShape << '\n';
 
   cv::Mat img = cv::imread("./test.jpg");
   cv::Mat inputMat;
@@ -90,11 +99,8 @@ int main(int argc, char *argv[]) {
   std::cout << "outputTensor size: " << outputTensors.size() << '\n';
   float *pData = outputTensors[0].GetTensorMutableData<float>();
   auto outputCount = outputTensors[0].GetTensorTypeAndShapeInfo().GetShape();
-  int64_t nelem = 1;
-  for (auto &i : outputCount) {
-    nelem *= i;
-  }
-  std::vector<float> data(pData, pData + nelem);
+  std::vector<float> data(pData, pData + vectorProduct(outputCount));
+
   // lambda to filter out low confidence result
   std::size_t idx = 0;
   auto confCondition = [&idx](const float &i) {
